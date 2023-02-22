@@ -159,6 +159,7 @@ export default class MainMenu extends Scene {
             }
             case MainMenuEvent.PLAY_RECORDING: {
                 // TODO play the recording here
+                this.sceneManager.changeToScene(Homework1_Scene, {seed: RandUtils.seed, recording: true});
                 break;
             }
             default: {

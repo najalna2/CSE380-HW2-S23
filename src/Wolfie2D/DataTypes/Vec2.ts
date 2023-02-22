@@ -24,7 +24,11 @@ export default class Vec2 {
 		this.vec[0] = x;
 		this.vec[1] = y;
 	}
-
+	squaredDistanceTo(other: Vec2): number {
+        const dx = other.x - this.x;
+        const dy = other.y - this.y;
+        return dx * dx + dy * dy;
+    }
 	// Expose x and y with getters and setters
 	get x() {
 		return this.vec[0];

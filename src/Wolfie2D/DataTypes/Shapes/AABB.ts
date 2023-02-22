@@ -47,6 +47,16 @@ export default class AABB extends Shape {
     getBoundingRect(): AABB {
         return this.clone();
     }
+    
+        getClosestPoint(point: Vec2): Vec2 {
+            // Calculate the closest point on the AABB to the given point
+            const closestPoint = new Vec2(
+                Math.max(this.left, Math.min(point.x, this.right)),
+                Math.max(this.bottom, Math.min(point.y, this.top))
+            );
+    
+            return closestPoint;
+        }
 
     // @override
     getBoundingCircle(): Circle {

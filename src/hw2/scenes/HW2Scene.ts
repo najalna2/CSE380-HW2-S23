@@ -538,6 +538,27 @@ export default class HW2Scene extends Scene {
 	 */
 	protected spawnBubble(): void {
 		// TODO spawn bubbles!
+		let bubble: Graphic = this.bubbles.find((bubble: Graphic) => { return !bubble.visible });
+
+		if (bubble){
+			// Bring this mine to life
+			bubble.visible = true;
+
+			// Extract the size of the viewport
+			let paddedViewportSize = this.viewport.getHalfSize().scaled(2).add(this.worldPadding);
+			let viewportSize = this.viewport.getHalfSize().scaled(2);
+
+			// Loop on position until we're clear of the player
+			bubble.position.copy(RandUtils.randVec(viewportSize.x, paddedViewportSize.x, paddedViewportSize.y - viewportSize.y, viewportSize.y));
+			while(bubble.position.distanceTo(this.player.position) < 100){
+				bubble.position.copy(RandUtils.randVec(paddedViewportSize.x, paddedViewportSize.x, paddedViewportSize.y - viewportSize.y, viewportSize.y));
+			}
+
+			bubble.setAIActive(true, {});
+			// Start the mine spawn timer - spawn a mine every half a second I think
+			this.mineSpawnTimer.start(100);
+
+		}
 	}
 	/**
 	 * This function takes in a GameNode that may be out of bounds of the viewport and
@@ -584,6 +605,17 @@ export default class HW2Scene extends Scene {
 	 */
 	public handleScreenDespawn(node: CanvasNode): void {
         // TODO - despawn the game nodes when they move out of the padded viewport
+		const padding = 50; // Define the amount of padding to use
+
+    	// Check if the node is off the left or right edge of the viewport
+    	if (node.positionX < -padding || node.positionX > node.scaleX + padding) {
+       		node.visible = false;
+    	}
+
+    	// Check if the node is off the top or bottom edge of the viewport
+    	if (node.positionY < -padding || node.positionY > node.scaleY + padding) {
+       		node.visible = false;
+    	}
 	}
 
 	/** Methods for updating the UI */
@@ -736,7 +768,13 @@ export default class HW2Scene extends Scene {
 	 */
 	public handleBubblePlayerCollisions(): number {
 		// TODO check for collisions between the player and the bubbles
-        return;
+		let currentAir = 0;
+		for (let bubble of this.bubbles){
+			if (bubble.visible && this.player.collisionShape.overlaps(bubble.collisionShape)) {
+				//bubble.id 
+			}
+		}
+        return ;
 	}
 
 	/**
@@ -760,8 +798,9 @@ export default class HW2Scene extends Scene {
 		let collisions = 0;
 		for (let mine of this.mines) {
 			if (mine.visible && this.player.collisionShape.overlaps(mine.collisionShape)) {
-				this.emitter.fireEvent(HW2Events.PLAYER_MINE_COLLISION, {id: mine.id});
+				this.emitter.fireEvent(HW2Events.PLAYER_MINE_COLLISION, {mineId: mine.id, playerId: this.player.id});
 				collisions += 1;
+				this.handleHealthChange(1, 10);
 			}
 		}	
 		return collisions;
@@ -809,8 +848,9 @@ export default class HW2Scene extends Scene {
 	 * @see MathUtils for more information about MathUtil functions
 	 */
 	public static checkAABBtoCircleCollision(aabb: AABB, circle: Circle): boolean {
-        // TODO implement collision detection for AABBs and Circles
-        return;
+		const closestPoint = aabb.getClosestPoint(circle.center);
+		const distanceSquared = closestPoint.squaredDistanceTo(circle.center);
+		return distanceSquared <= circle.radius * circle.radius;
 	}
 
     /** Methods for locking and wrapping nodes */
@@ -861,6 +901,14 @@ export default class HW2Scene extends Scene {
 	 */
 	protected wrapPlayer(player: CanvasNode, viewportCenter: Vec2, viewportHalfSize: Vec2): void {
 		// TODO wrap the player around the top/bottom of the screen
+		if (player.size.y + player.size.y / 2 < viewportCenter.y - viewportHalfSize.y) {
+   			// Wrap the player's sprite to the bottom of the screen
+			   player.size.y = viewportCenter.y + viewportHalfSize.y - player.size.y / 2;
+  			}
+		else if (player.size.y - player.size.y / 2 > viewportCenter.y + viewportHalfSize.y) {
+    		// Wrap the player's sprite to the top of the screen
+    		player.size.y = viewportCenter.y - viewportHalfSize.y + player.size.y / 2;
+  		}
 	}
 
     /**
@@ -904,6 +952,18 @@ export default class HW2Scene extends Scene {
 	 */
 	protected lockPlayer(player: CanvasNode, viewportCenter: Vec2, viewportHalfSize: Vec2): void {
 		// TODO prevent the player from moving off the left/right side of the screen
+		const halfWidth = player.size.x / 2;
+  		const leftEdge = viewportCenter.x - viewportHalfSize.x + halfWidth;
+  		const rightEdge = viewportCenter.x + viewportHalfSize.x - halfWidth;
+
+  		// Check if the player's left edge is beyond the left edge of the viewport
+  		if (player.size.x - halfWidth < leftEdge) {
+    		player.size.x = leftEdge + halfWidth;
+  		}
+  		// Check if the player's right edge is beyond the right edge of the viewport
+  		if (player.size.x + halfWidth > rightEdge) {
+    		player.size.x = rightEdge - halfWidth;
+  		}
 	}
 
 	public handleTimers(): void {

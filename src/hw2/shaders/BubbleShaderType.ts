@@ -73,7 +73,6 @@ export default class BubbleShaderType extends RectShaderType {
 			position: gc.position,
 			size: gc.size,
 			rotation: gc.rotation,
-            // TODO Remove the color from this shader
 			color: gc.color
 		}
 		return options;
